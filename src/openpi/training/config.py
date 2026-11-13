@@ -761,6 +761,59 @@ _CONFIGS = [
         pytorch_weight_path="/path/to/your/pytorch_weight_path",
         num_train_steps=30_000,
     ),
+    
+    TrainConfig(
+        name="pi05_libero_lora",
+    
+        model=pi0_config.Pi0Config(
+            pi05=True,
+            action_horizon=10,
+            discrete_state_input=False,
+            paligemma_variant="gemma_2b_lora",
+            action_expert_variant="gemma_300m_lora",
+        ),
+    
+        data=LeRobotLiberoDataConfig(
+            repo_id="physical-intelligence/libero",
+            base_config=DataConfig(prompt_from_task=True),
+            extra_delta_transform=False,
+        ),
+    
+        weight_loader=weight_loaders.CheckpointWeightLoader(
+             "/root/autodl-tmp/openpi-workspace/checkpoints/openpi-assets/checkpoints/pi05_base/params/params"
+        ),
+    
+        freeze_filter=pi0_config.Pi0Config(
+            pi05=True,
+            action_horizon=10,
+            discrete_state_input=False,
+            paligemma_variant="gemma_2b_lora",
+            action_expert_variant="gemma_300m_lora",
+        ).get_freeze_filter(),
+    
+        ema_decay=None,
+    
+        # 4090 首轮测试先从较小 Batch Size 开始
+        batch_size=4,
+    
+        lr_schedule=_optimizer.CosineDecaySchedule(
+            warmup_steps=1000,
+            peak_lr=2.5e-5,
+            decay_steps=30000,
+            decay_lr=2.5e-6,
+        ),
+    
+        optimizer=_optimizer.AdamW(
+            clip_gradient_norm=1.0,
+        ),
+    
+        num_train_steps=30000,
+    
+        assets_base_dir="/root/autodl-tmp/openpi-workspace/checkpoints/training-assets",
+    
+        checkpoint_base_dir="/root/autodl-tmp/openpi-workspace/checkpoints/finetuned",
+    ),
+
     #
     # Fine-tuning Aloha configs.
     #
